@@ -97,7 +97,7 @@ const AddTaskModal = ({ isOpen, onClose, onAdd }) => {
                             type="text"
                             value={taskTitle}
                             onChange={(e) => setTaskTitle(e.target.value)}
-                            
+                            placeholder="Enter task"
                             style={modalStyles.input}
                             autoFocus
                         />
