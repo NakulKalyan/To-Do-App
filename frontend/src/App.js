@@ -3,7 +3,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import './App.css';
 
-// Modal Component with inline styles
+
 const AddTaskModal = ({ isOpen, onClose, onAdd }) => {
     const [taskTitle, setTaskTitle] = useState('');
 
@@ -20,7 +20,7 @@ const AddTaskModal = ({ isOpen, onClose, onAdd }) => {
         }
     };
 
-    // Modal styles
+    
     const modalStyles = {
         overlay: {
             position: 'fixed',
@@ -113,6 +113,92 @@ const AddTaskModal = ({ isOpen, onClose, onAdd }) => {
         </div>
     );
 };
+const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, taskTitle }) => {
+    if (!isOpen) return null;
+
+    const modalStyles = {
+        overlay: {
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 1000,
+        },
+        content: {
+            backgroundColor: 'white',
+            padding: '20px',
+            borderRadius: '8px',
+            width: '90%',
+            maxWidth: '400px',
+            boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+        },
+        header: {
+            textAlign: 'center',
+            marginBottom: '20px',
+        },
+        title: {
+            margin: '0 0 10px 0',
+            color: '#dc3545',
+        },
+        message: {
+            marginBottom: '20px',
+            textAlign: 'center',
+            color: '#666',
+        },
+        buttons: {
+            display: 'flex',
+            justifyContent: 'center',
+            gap: '10px',
+        },
+        cancelButton: {
+            padding: '8px 16px',
+            borderRadius: '4px',
+            border: '1px solid #ddd',
+            backgroundColor: '#fff',
+            cursor: 'pointer',
+        },
+        confirmButton: {
+            padding: '8px 16px',
+            borderRadius: '4px',
+            border: 'none',
+            backgroundColor: '#dc3545',
+            color: 'white',
+            cursor: 'pointer',
+        },
+    };
+
+    return (
+        <div style={modalStyles.overlay} onClick={onClose}>
+            <div style={modalStyles.content} onClick={e => e.stopPropagation()}>
+                <div style={modalStyles.header}>
+                    <h2 style={modalStyles.title}>Delete Task</h2>
+                    <p style={modalStyles.message}>
+                        Are you sure you want to delete the task "{taskTitle}"?
+                    </p>
+                </div>
+                <div style={modalStyles.buttons}>
+                    <button style={modalStyles.cancelButton} onClick={onClose}>
+                        Cancel
+                    </button>
+                    <button 
+                        style={modalStyles.confirmButton} 
+                        onClick={() => {
+                            onConfirm();
+                            onClose();
+                        }}
+                    >
+                        Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};  
 
 const Pagination = ({ totalItems, itemsPerPage, currentPage, onPageChange }) => {
     const totalPages = Math.ceil(totalItems / itemsPerPage);
@@ -152,6 +238,7 @@ const Pagination = ({ totalItems, itemsPerPage, currentPage, onPageChange }) => 
 };
 
 const App = () => {
+    const [deleteModal, setDeleteModal] = useState({ isOpen: false, taskId: null, taskTitle: '' });
     const [tasks, setTasks] = useState([]);
     const [view, setView] = useState('list');
     const [currentPage, setCurrentPage] = useState(1);
@@ -224,6 +311,14 @@ const App = () => {
         });
     };
 
+    const handleDeleteClick = (task) => {
+        setDeleteModal({ 
+            isOpen: true, 
+            taskId: task._id,
+            taskTitle: task.title
+        });
+    };
+
     const deleteTask = (id) => {
         fetch(`http://localhost:5000/tasks/${id}`, {
             method: 'DELETE',
@@ -234,12 +329,12 @@ const App = () => {
             if (currentPage > newTotalPages) {
                 setCurrentPage(newTotalPages);
             }
-            toast.success('Task deleted successfully!',{
+            toast.success('Task deleted successfully!', {
                 autoClose: 1000
             });
         })
         .catch(() => {
-            toast.error('Failed to delete task',{
+            toast.error('Failed to delete task', {
                 autoClose: 1000
             });
         });
@@ -252,6 +347,12 @@ const App = () => {
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 onAdd={addTask}
+            />
+            <DeleteConfirmationModal
+                isOpen={deleteModal.isOpen}
+                onClose={() => setDeleteModal({ isOpen: false, taskId: null, taskTitle: '' })}
+                onConfirm={() => deleteTask(deleteModal.taskId)}
+                taskTitle={deleteModal.taskTitle}
             />
             
             <header className="app-header">
@@ -300,7 +401,7 @@ const App = () => {
                                             {task.completed ? 'Undo' : 'Complete'}
                                         </button>
                                         <button
-                                            onClick={() => deleteTask(task._id)}
+                                            onClick={() => handleDeleteClick(task)}
                                             className="action-button delete-button"
                                         >
                                             Delete
@@ -350,7 +451,7 @@ const App = () => {
                                                     {task.completed ? 'Undo' : 'Complete'}
                                                 </button>
                                                 <button
-                                                    onClick={() => deleteTask(task._id)}
+                                                    onClick={() => handleDeleteClick(task)}
                                                     className="action-button delete-button"
                                                 >
                                                     Delete
